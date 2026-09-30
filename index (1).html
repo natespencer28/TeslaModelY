@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Model Y Maintenance</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F3; --panel:#FFFFFF; --ink:#1C2430; --muted:#5E6B7A; --line:#D7DDE4;
+  --side:#232B34; --side-ink:#C9D2DC; --side-active:#FFFFFF;
+  --accent:#3E6AE1; --accent-ink:#FFFFFF;
+  --ok:#2E8B57; --soon:#C7820E; --over:#C8372D; --none:#8A96A3;
+  --radius:10px;
+  --sans:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --cond:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#161B21;--panel:#1F262E;--ink:#E6EBF0;--muted:#98A4B1;--line:#313A45;--side:#10151A;--side-ink:#A9B4C0;--accent:#6D8FF0;--ok:#4DB57C;--soon:#E0A53A;--over:#E5655A;--none:#7C8894}
+}
+*,*::before,*::after{box-sizing:inherit}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100%}
+/* Sidebar */
+.side{background:var(--side);color:var(--side-ink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:20px 12px}
+.brand{font:700 1.5rem/1 var(--cond);color:#fff;padding:4px 12px 2px;letter-spacing:.01em}
+.brand-sub{font-size:.85rem;padding:0 12px 20px;color:var(--side-ink)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{white-space:nowrap;display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--side-ink);font-weight:500}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:rgba(255,255,255,.1);color:var(--side-active);box-shadow:inset 3px 0 0 var(--accent)}
+.nav svg{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.badge{margin-left:auto;background:var(--over);color:#fff;font-size:.75rem;font-weight:600;border-radius:10px;padding:0 7px;line-height:20px}
+.badge.soon{background:var(--soon)}
+.side-foot{margin-top:auto;font-size:.8rem;padding:12px;line-height:1.4;display:flex;gap:8px;align-items:baseline}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--none);transform:translateY(-1px)}
+.dot.ok{background:var(--ok)}.dot.syncing{background:var(--accent)}.dot.error{background:var(--over)}.dot.offline{background:var(--soon)}
+.steps{margin:0 0 16px;padding-left:20px}.steps li{margin-bottom:6px}
+
+/* Main */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:16px;padding:18px 32px;border-bottom:1px solid var(--line);background:var(--panel);position:sticky;top:0;z-index:5}
+.top h1{font:600 1.9rem/1.1 var(--cond);margin:0;flex:1;min-width:0}
+.scrim{display:none}
+.menu-btn{display:none;background:none;border:1px solid var(--line);border-radius:8px;width:40px;height:40px;cursor:pointer}
+.menu-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* Odometer — the signature element */
+.odo{display:flex;align-items:center;gap:10px;background:none;border:0;cursor:pointer;padding:4px;border-radius:8px}
+.odo-label{font-size:.8rem;color:var(--muted);text-align:right;line-height:1.2}
+.odo-digits{display:flex;gap:2px}
+.odo-digits span{font:600 1.45rem/1 var(--cond);font-variant-numeric:tabular-nums;background:#1C2430;color:#F2F5F8;width:1.15em;padding:6px 0;text-align:center;border-radius:3px;box-shadow:inset 0 -8px 10px -6px rgba(0,0,0,.6),inset 0 8px 10px -6px rgba(0,0,0,.6)}
+.odo-digits span.lead{color:#5E6B7A}
+
+.content{padding:28px 32px 60px;max-width:1400px;width:100%}
+@media (min-width:1280px){.overview-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:0 28px;align-items:start}}
+.section{margin-bottom:32px}
+.section h2{font:600 1.35rem/1.2 var(--cond);margin:0 0 12px}
+.section > p.lede{color:var(--muted);margin:-6px 0 14px;max-width:68ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius)}
+.pad{padding:18px 20px}
+
+/* Status rows */
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:1fr auto;gap:6px 16px;padding:16px 20px;border-top:1px solid var(--line);align-items:center}
+.row:first-child{border-top:0}
+.row-title{font-weight:600}
+.row-meta{font-size:.9rem;color:var(--muted)}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.gauge{grid-column:1 / -1;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.gauge i{display:block;height:100%;border-radius:3px}
+.st{display:inline-flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600}
+.st::before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}
+.st.ok{color:var(--ok)} .st.soon{color:var(--soon)} .st.overdue{color:var(--over)} .st.unknown{color:var(--none)}
+
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+.sum{padding:16px 18px;border-left:4px solid var(--none)}
+.sum b{display:block;font:600 2rem/1 var(--cond)}
+.sum span{color:var(--muted);font-size:.9rem}
+.sum.overdue{border-left-color:var(--over)} .sum.soon{border-left-color:var(--soon)} .sum.ok{border-left-color:var(--ok)}
+
+/* Buttons & forms */
+.btn{text-decoration:none;color:var(--ink);border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 14px;cursor:pointer;font-weight:500;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--over)}
+.btn.danger{color:var(--over)}
+.btn.small{padding:4px 10px;font-size:.9rem}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.toolbar .grow{flex:1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.9rem;color:var(--muted)}
+label.f input,label.f select,label.f textarea,.search{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;color:var(--ink);font-size:1rem;width:100%}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.check{display:flex;align-items:center;gap:10px;font-size:1rem;color:var(--ink)}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+
+/* Checklist */
+.cl li{display:flex;gap:12px;padding:12px 20px;border-top:1px solid var(--line);align-items:flex-start}
+.cl li:first-child{border-top:0}
+.cl ul{list-style:none;margin:0;padding:0}
+.cl input{width:22px;height:22px;margin-top:1px;flex:none;accent-color:var(--ok)}
+.cl li.done span{color:var(--muted);text-decoration:line-through}
+.progress{font-size:.9rem;color:var(--muted);font-weight:500}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:10px 14px;border-top:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);border-top:0;font-size:.85rem}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.wrap{white-space:normal;min-width:180px}
+.low{color:var(--over);font-weight:600}
+
+.empty{padding:28px 20px;color:var(--muted);text-align:center}
+.note{border-left:4px solid var(--accent);padding:12px 16px;background:var(--panel);border-radius:0 var(--radius) var(--radius) 0;margin-bottom:12px}
+.note.warn{border-left-color:var(--over)}
+.ref li{margin-bottom:8px}
+
+/* Dialog */
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;background:var(--panel);color:var(--ink);width:min(480px,94vw)}
+dialog::backdrop{background:rgba(10,15,20,.5)}
+dialog form{padding:22px}
+dialog h3{font:600 1.4rem/1.2 var(--cond);margin:0 0 16px}
+dialog .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+dialog .stack{display:flex;flex-direction:column;gap:12px}
+
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--panel);padding:10px 18px;border-radius:8px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{position:fixed;left:0;top:0;bottom:0;width:260px;z-index:20;transform:translateX(-100%);transition:transform .2s;height:100%;padding-top:calc(20px + env(safe-area-inset-top,0px))}
+  .app.nav-open .side{transform:none}
+  .scrim{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:15}
+  .app.nav-open .scrim{display:block}
+  .menu-btn{display:inline-grid;place-items:center}
+  .top{padding:12px 16px;gap:10px;top:env(safe-area-inset-top,0px)}
+  .top h1{font-size:1.5rem}
+  .odo-label{display:none}
+  .odo-digits span{font-size:1.15rem}
+  .content{padding:20px 16px 60px}
+  .row{grid-template-columns:1fr;padding:14px 16px}
+  .row-actions{justify-content:flex-start}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side" id="side">
+    <div class="brand" id="brandName">Model Y</div>
+    <div class="brand-sub">Maintenance tracker</div>
+    <nav class="nav" id="nav"></nav>
+    <div class="side-foot" id="syncFoot"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="top">
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <h1 id="pageTitle">Overview</h1>
+      <button class="odo" id="odoBtn" aria-label="Update odometer">
+        <span class="odo-label">Odometer<br><span id="odoDate"></span></span>
+        <span class="odo-digits" id="odoDigits"></span>
+      </button>
+    </header>
+    <main class="content" id="content"></main>
+  </div>
+</div>
+<dialog id="dlg"><form method="dialog" id="dlgForm"></form></dialog>
+<div class="toast" id="toast" role="status"></div>
+<input type="file" id="importFile" accept="application/json" hidden>
+
+<script>
+(function(){
+"use strict";
+const KEY = "modely-maint-v1";
+
+/* ---------- Defaults from the Tesla Model Y Owner's Manual ---------- */
+const DEFAULT_ITEMS = [
+  {id:"tire_rotation", name:"Tire rotation", desc:"Every 6,250 mi (10,000 km), or sooner if tread depth differs by 2/32 in or more.", months:null, miles:6250, enabled:true},
+  {id:"brake_fluid", name:"Brake fluid health check", desc:"Check every 4 years, replace only if needed. More often with towing, mountain driving or hot, humid climates.", months:48, miles:null, enabled:true},
+  {id:"cabin_filter", name:"Cabin air filter", desc:"Replace every 2 years.", months:24, miles:null, enabled:true},
+  {id:"hepa_filter", name:"HEPA & carbon filters", desc:"Replace both pairs every 3 years (if equipped).", months:36, miles:null, enabled:true},
+  {id:"wipers", name:"Wiper blades", desc:"Replace every year, or sooner if streaking.", months:12, miles:null, enabled:true},
+  {id:"calipers", name:"Clean & lubricate brake calipers", desc:"Every year or 12,500 mi where roads are salted in winter.", months:12, miles:12500, enabled:false},
+  {id:"ac_desiccant", name:"A/C desiccant bag", desc:"Every 4 years on some older model years. Enable if your car lists it.", months:48, miles:null, enabled:false}
+];
+const CHECKS = {
+  daily:[
+    ["d_charge","Check battery charge level"],
+    ["d_tires","Check tire condition and pressure"],
+    ["d_lights","Exterior lights, horn, turn signals, wipers and washers work"],
+    ["d_alerts","No unexpected indicator lights or alerts"],
+    ["d_brakes","Brakes and parking brake work (press the pedal firmly now and then to keep rotors clean)"],
+    ["d_belts","Seat belts operate normally"],
+    ["d_leaks","No unusual fluid under the car (a little A/C water is normal)"],
+    ["d_paint","Remove bird droppings, sap, tar or bugs from paint"]
+  ],
+  weekly:[["w_cams","Clean cameras (weekly in wet weather, monthly when dry)"]],
+  monthly:[
+    ["m_washer","Check and top up windshield washer fluid"],
+    ["m_ac","Confirm the air conditioning works properly"]
+  ]
+};
+
+function freshState(){
+  return {
+    vehicle:{name:"Model Y", year:"", trim:"", vin:"", odometer:0, odoDate:"", salted:false, hepa:true, targetPsi:42},
+    items: DEFAULT_ITEMS.map(i=>({...i, last:null, custom:false})),
+    log:[], pressures:[], tread:[], checks:{}, checksMod:0, deleted:[], updatedAt:0
+  };
+}
+
+let S;
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw){
+      S = Object.assign(freshState(), JSON.parse(raw));
+      // add any new default items introduced later
+      if(!Array.isArray(S.deleted)) S.deleted=[];
+      DEFAULT_ITEMS.forEach(d=>{ if(!S.items.find(i=>i.id===d.id)) S.items.push({...d,last:null,custom:false}); });
+      return;
+    }
+  }catch(e){ console.warn("Load failed", e); }
+  S = freshState();
+}
+function saveLocal(){
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch(e){ toast("Couldn't save. Export a backup to be safe."); }
+}
+function save(){
+  S.updatedAt=Date.now();
+  saveLocal();
+  Sync.schedule();
+}
+
+/* ---------- Utilities ---------- */
+const $ = s=>document.querySelector(s);
+const esc = s=>String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = ()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+function today(){ const d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function parseD(s){ const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); }
+function isoD(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addMonths(s,n){ const d=parseD(s); const day=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+n); const max=new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); d.setDate(Math.min(day,max)); return isoD(d); }
+function daysBetween(a,b){ return Math.round((parseD(b)-parseD(a))/86400000); }
+function fmtD(s){ if(!s) return "—"; return parseD(s).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"}); }
+const fmtMi = n=> (n==null||n==="") ? "—" : Number(n).toLocaleString()+" mi";
+const money = n=> "$"+Number(n||0).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+function weekKey(){ const d=new Date(); const dow=(d.getDay()+6)%7; d.setDate(d.getDate()-dow); return isoD(d); }
+function periodKey(p){ return p==="daily"?today():p==="weekly"?weekKey():today().slice(0,7); }
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove("show"),2200); }
+
+/* ---------- Status logic ---------- */
+function treadDiff(){
+  const t=S.tread[0]; if(!t) return null;
+  const v=[t.fl,t.fr,t.rl,t.rr].map(Number).filter(n=>!isNaN(n)); if(v.length<2) return null;
+  return Math.max(...v)-Math.min(...v);
+}
+function status(item){
+  const odo=Number(S.vehicle.odometer)||0;
+  if(!item.last) return {state:"unknown", text:"No record yet — log the last time this was done", pct:0};
+  const parts=[];
+  if(item.months){
+    const due=addMonths(item.last.date,item.months);
+    const total=Math.max(1,daysBetween(item.last.date,due)), left=daysBetween(today(),due);
+    parts.push({frac:left/total, text:left<0?`${-left} days overdue (due ${fmtD(due)})`:`Due ${fmtD(due)} · ${left} days`});
+  }
+  if(item.miles && item.last.miles!=null && item.last.miles!==""){
+    const dueMi=Number(item.last.miles)+Number(item.miles), left=dueMi-odo;
+    parts.push({frac:left/item.miles, text:left<0?`${(-left).toLocaleString()} mi overdue`:`Due at ${dueMi.toLocaleString()} mi · ${left.toLocaleString()} mi left`});
+  }
+  if(!parts.length) return {state:"unknown", text:"Add mileage to the last record to track this", pct:0};
+  parts.sort((a,b)=>a.frac-b.frac);
+  const p=parts[0];
+  let state = p.frac<0?"overdue":p.frac<=0.15?"soon":"ok";
+  let text = parts.map(x=>x.text).join("  ·  ");
+  if(item.id==="tire_rotation"){ const td=treadDiff(); if(td!=null && td>=2 && state==="ok"){ state="soon"; text=`Tread differs by ${td}/32 — rotate now. `+text; } }
+  return {state, text, pct:Math.max(0,Math.min(1,p.frac))*100};
+}
+const stateLabel={ok:"Good",soon:"Due soon",overdue:"Overdue",unknown:"No record"};
+const stateColor={ok:"var(--ok)",soon:"var(--soon)",overdue:"var(--over)",unknown:"var(--none)"};
+function activeItems(){ return S.items.filter(i=>i.enabled); }
+function counts(){ const c={ok:0,soon:0,overdue:0,unknown:0}; activeItems().forEach(i=>c[status(i).state]++); return c; }
+
+/* ---------- Navigation ---------- */
+const ICON = {
+  overview:'<path d="M3 13h8V3H3zM13 21h8V11h-8zM3 21h8v-6H3zM13 3v6h8V3z"/>',
+  schedule:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  tires:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M12 3v5.5M12 15.5V21M3 12h5.5M15.5 12H21"/>',
+  checks:'<path d="M9 11l3 3 8-8"/><path d="M20 12v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9"/>',
+  log:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+  vehicle:'<path d="M5 17h14M3 13l2-5a2 2 0 0 1 2-1.3h10A2 2 0 0 1 19 8l2 5v4H3z"/><circle cx="7.5" cy="17" r="1.8"/><circle cx="16.5" cy="17" r="1.8"/>',
+  guide:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5V21h16"/>'
+};
+const PAGES = [
+  ["overview","Overview"],["schedule","Scheduled maintenance"],["tires","Tires"],
+  ["checks","Routine checks"],["log","Service log"],["vehicle","Vehicle & backup"],["guide","Manual notes"]
+];
+const NAVLABEL={overview:"Overview",schedule:"Scheduled",tires:"Tires",checks:"Routine checks",log:"Service log",vehicle:"Vehicle & backup",guide:"Manual notes"};
+
+function renderNav(page){
+  const c=counts();
+  const due=c.overdue||c.soon;
+  $("#nav").innerHTML = PAGES.map(([id])=>{
+    let badge="";
+    if(id==="schedule" && due) badge=`<span class="badge ${c.overdue?"":"soon"}">${due}</span>`;
+    if(id==="checks"){ const left=CHECKS.daily.filter(([k])=>S.checks[k]!==periodKey("daily")).length; if(left) badge=`<span class="badge soon">${left}</span>`; }
+    return `<a href="#${id}" class="${id===page?"active":""}" ${id===page?'aria-current="page"':""}><svg viewBox="0 0 24 24">${ICON[id]}</svg>${NAVLABEL[id]}${badge}</a>`;
+  }).join("");
+  $("#brandName").textContent = S.vehicle.name || "Model Y";
+}
+function renderOdo(){
+  const s=String(Math.max(0,Math.round(Number(S.vehicle.odometer)||0))).padStart(6,"0");
+  const firstNZ = s.search(/[1-9]/);
+  $("#odoDigits").innerHTML=[...s].map((d,i)=>`<span class="${firstNZ===-1||i<firstNZ?"lead":""}">${d}</span>`).join("");
+  $("#odoDate").textContent = S.vehicle.odoDate ? "updated "+fmtD(S.vehicle.odoDate) : "tap to set";
+}
+
+/* ---------- Page renderers ---------- */
+function itemRow(i, compact){
+  const st=status(i);
+  const interval=[i.months?`${i.months>=12&&i.months%12===0?i.months/12+" yr":i.months+" mo"}`:null, i.miles?`${Number(i.miles).toLocaleString()} mi`:null].filter(Boolean).join(" or ");
+  return `<div class="row">
+    <div>
+      <div class="row-title">${esc(i.name)} <span class="st ${st.state}">${stateLabel[st.state]}</span></div>
+      <div class="row-meta">${esc(st.text)}</div>
+      ${compact?"":`<div class="row-meta">Every ${interval||"—"} · Last done ${i.last?fmtD(i.last.date)+(i.last.miles?" at "+fmtMi(i.last.miles):""):"never recorded"}</div>`}
+    </div>
+    <div class="row-actions">
+      <button class="btn small primary" data-act="done" data-id="${i.id}">Log service</button>
+      ${compact?"":`<button class="btn small" data-act="edit-item" data-id="${i.id}">Edit</button>`}
+    </div>
+    <div class="gauge" aria-hidden="true"><i style="width:${st.state==="unknown"?0:Math.max(st.pct,st.state==="overdue"?100:3)}%;background:${stateColor[st.state]}"></i></div>
+  </div>`;
+}
+
+const R = {};
+R.overview = ()=>{
+  const c=counts();
+  const attn=activeItems().filter(i=>status(i).state!=="ok").sort((a,b)=>["overdue","soon","unknown"].indexOf(status(a).state)-["overdue","soon","unknown"].indexOf(status(b).state));
+  const dLeft=CHECKS.daily.filter(([k])=>S.checks[k]!==periodKey("daily")).length;
+  const recent=[...S.log].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  return `
+  <div class="summary">
+    <div class="panel sum overdue"><b>${c.overdue}</b><span>Overdue</span></div>
+    <div class="panel sum soon"><b>${c.soon}</b><span>Due soon</span></div>
+    <div class="panel sum ok"><b>${c.ok}</b><span>Up to date</span></div>
+    <div class="panel sum"><b>${c.unknown}</b><span>Not recorded yet</span></div>
+  </div>
+  ${!S.vehicle.odoDate?`<div class="note">Start by setting your current mileage (tap the odometer), then log when each item was last done so the tracker can work out what's next.</div>`:""}
+  ${S.vehicle.odoDate && daysBetween(S.vehicle.odoDate,today())>30?`<div class="note">Your mileage was last updated ${daysBetween(S.vehicle.odoDate,today())} days ago. <a href="#" data-act="odo">Update it</a> so mileage-based items stay accurate.</div>`:""}
+  <div class="overview-grid"><div class="section">
+    <h2>Needs attention</h2>
+    <div class="panel rows">${attn.length?attn.map(i=>itemRow(i,true)).join(""):`<div class="empty">Everything scheduled is up to date.</div>`}</div>
+  </div>
+  <div><div class="section">
+    <h2>Today's checks</h2>
+    <div class="panel pad" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <span style="flex:1">${dLeft?`${dLeft} of ${CHECKS.daily.length} daily checks left`:"All daily checks done for today."}</span>
+      <a class="btn" href="#checks">Open checklist</a>
+    </div>
+  </div>
+  <div class="section">
+    <h2>Recent service</h2>
+    <div class="panel">${recent.length?`<div class="rows">${recent.map(e=>`<div class="row"><div><div class="row-title">${esc(e.title)}</div><div class="row-meta">${fmtD(e.date)}${e.miles?" · "+fmtMi(e.miles):""}${e.shop?" · "+esc(e.shop):""}</div></div><div class="row-meta">${e.cost?money(e.cost):""}</div></div>`).join("")}</div><div class="pad" style="border-top:1px solid var(--line);padding-top:12px;padding-bottom:12px"><a href="#log">View full service log</a></div>`:`<div class="empty">No service logged yet. <a href="#" data-act="add-log">Add an entry</a>.</div>`}</div>
+  </div></div></div>`;
+};
+
+R.schedule = ()=>{
+  const on=S.items.filter(i=>i.enabled), off=S.items.filter(i=>!i.enabled);
+  return `
+  <div class="section">
+    <p class="lede">Intervals from the Tesla Model Y Owner's Manual. Items due within the last 15% of their interval show as due soon.</p>
+    <div class="toolbar"><span class="grow"></span><button class="btn" data-act="new-item">Add custom item</button></div>
+    <div class="panel rows">${on.length?on.map(i=>itemRow(i,false)).join(""):`<div class="empty">No items are turned on.</div>`}</div>
+  </div>
+  ${off.length?`<div class="section"><h2>Turned off</h2><p class="lede">Turn these on if they apply to your car or climate.</p>
+    <div class="panel rows">${off.map(i=>`<div class="row"><div><div class="row-title">${esc(i.name)}</div><div class="row-meta">${esc(i.desc||"")}</div></div>
+    <div class="row-actions"><button class="btn small" data-act="enable" data-id="${i.id}">Turn on</button></div></div>`).join("")}</div></div>`:""}
+  <div class="section"><h2>Wear items</h2>
+    <p class="lede">Tesla doesn't give fixed intervals for these; replace as they wear. Log them in the service log when you do.</p>
+    <div class="panel pad"><ul style="margin:0;padding-left:20px">
+      <li>Brake pads (wear slowly thanks to regenerative braking)</li>
+      <li>Low-voltage (12V / 16V) battery — the car will alert you when it needs replacing</li>
+      <li>Tires — replace when tread reaches 2/32 in or shows damage</li>
+    </ul></div></div>`;
+};
+
+R.tires = ()=>{
+  const rot=S.items.find(i=>i.id==="tire_rotation");
+  const tgt=Number(S.vehicle.targetPsi)||42;
+  const td=treadDiff();
+  const cell=(v,low)=>`<td class="num ${low?"low":""}">${esc(v??"—")}</td>`;
+  return `
+  <div class="section"><h2>Rotation</h2>
+    <div class="panel rows">${rot?itemRow(rot,false):""}</div>
+  </div>
+  <div class="section"><h2>Pressure</h2>
+    <p class="lede">Target ${tgt} psi (cold). Confirm yours on the label in the driver's door jamb and set it on the Vehicle page. Readings more than 2 psi under target are highlighted.</p>
+    <div class="toolbar"><span class="grow"></span><button class="btn primary" data-act="add-psi">Log pressure</button></div>
+    <div class="panel">${S.pressures.length?`<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="num">FL</th><th class="num">FR</th><th class="num">RL</th><th class="num">RR</th><th></th></tr></thead><tbody>
+      ${S.pressures.map(p=>`<tr><td>${fmtD(p.date)}</td>${["fl","fr","rl","rr"].map(k=>cell(p[k],Number(p[k])<tgt-2)).join("")}<td class="num"><button class="btn small danger" data-act="del-psi" data-id="${p.id}">Delete</button></td></tr>`).join("")}
+      </tbody></table></div>`:`<div class="empty">No pressure readings yet.</div>`}</div>
+  </div>
+  <div class="section"><h2>Tread depth</h2>
+    <p class="lede">In 32nds of an inch. Rotate early if any two tires differ by 2/32 or more; replace at 2/32.${td!=null?` Latest difference: <b>${td}/32</b>.`:""}</p>
+    <div class="toolbar"><span class="grow"></span><button class="btn primary" data-act="add-tread">Log tread depth</button></div>
+    <div class="panel">${S.tread.length?`<div class="tbl-wrap"><table><thead><tr><th>Date</th><th class="num">FL</th><th class="num">FR</th><th class="num">RL</th><th class="num">RR</th><th></th></tr></thead><tbody>
+      ${S.tread.map(p=>`<tr><td>${fmtD(p.date)}</td>${["fl","fr","rl","rr"].map(k=>cell(p[k],Number(p[k])<=3)).join("")}<td class="num"><button class="btn small danger" data-act="del-tread" data-id="${p.id}">Delete</button></td></tr>`).join("")}
+      </tbody></table></div>`:`<div class="empty">No tread readings yet.</div>`}</div>
+  </div>`;
+};
+
+R.checks = ()=>{
+  const group=(p,title,note)=>{
+    const k=periodKey(p), list=CHECKS[p], done=list.filter(([id])=>S.checks[id]===k).length;
+    return `<div class="section"><div class="toolbar"><h2 class="grow" style="margin:0">${title}</h2><span class="progress">${done} of ${list.length} done ${note}</span></div>
+    <div class="panel cl"><ul>${list.map(([id,txt])=>{const on=S.checks[id]===k;return `<li class="${on?"done":""}"><input type="checkbox" id="${id}" data-act="check" data-id="${id}" data-p="${p}" ${on?"checked":""}><label for="${id}"><span>${esc(txt)}</span></label></li>`;}).join("")}</ul></div></div>`;
+  };
+  return `<p class="lede" style="color:var(--muted)">Checklists reset automatically each day, week and month.</p>
+  ${group("daily","Daily","today")}${group("weekly","Weekly","this week")}${group("monthly","Monthly","this month")}
+  <div class="section"><h2>As needed</h2><div class="panel pad">
+    <p style="margin-top:0">Your car will flag these under Controls › Service › Maintenance:</p>
+    <ul style="margin:0;padding-left:20px"><li>Radiator cleaning if you drive in dusty or polluted conditions</li><li>Cleaning inside the windshield camera enclosure</li><li>Installing software updates as soon as they're available</li></ul>
+  </div></div>`;
+};
+
+function logTable(rows, withActions){
+  return `<div class="tbl-wrap"><table><thead><tr><th>Date</th><th>Service</th><th class="num">Mileage</th><th class="num">Cost</th><th>Shop</th><th>Notes</th>${withActions?"<th></th>":""}</tr></thead><tbody>
+  ${rows.map(e=>`<tr><td>${fmtD(e.date)}</td><td>${esc(e.title)}</td><td class="num">${fmtMi(e.miles)}</td><td class="num">${e.cost?money(e.cost):"—"}</td><td>${esc(e.shop||"—")}</td><td class="wrap">${esc(e.notes||"")}</td>
+  ${withActions?`<td class="num"><button class="btn small danger" data-act="del-log" data-id="${e.id}">Delete</button></td>`:""}</tr>`).join("")}
+  </tbody></table></div>`;
+}
+let logQuery="";
+R.log = ()=>{
+  const all=[...S.log].sort((a,b)=>b.date.localeCompare(a.date));
+  const q=logQuery.toLowerCase();
+  const rows=q?all.filter(e=>[e.title,e.shop,e.notes].join(" ").toLowerCase().includes(q)):all;
+  const total=rows.reduce((s,e)=>s+(Number(e.cost)||0),0);
+  return `<div class="toolbar">
+    <input class="search grow" id="logSearch" type="search" placeholder="Search service, shop or notes" value="${esc(logQuery)}" style="max-width:340px">
+    <span class="progress grow">${rows.length} entries · ${money(total)} total</span>
+    <button class="btn primary" data-act="add-log">Add entry</button></div>
+  <div class="panel">${rows.length?logTable(rows,true):`<div class="empty">${q?"No entries match your search.":"No service logged yet. Use Add entry, or Log service on any scheduled item."}</div>`}</div>`;
+};
+
+R.vehicle = ()=>{
+  const v=S.vehicle;
+  return `<div class="section"><h2>Your car</h2><div class="panel pad">
+    <form id="vehForm" class="grid2">
+      <label class="f">Nickname<input name="name" value="${esc(v.name)}"></label>
+      <label class="f">Model year<input name="year" inputmode="numeric" value="${esc(v.year)}"></label>
+      <label class="f">Trim<input name="trim" placeholder="Long Range AWD" value="${esc(v.trim)}"></label>
+      <label class="f">VIN<input name="vin" value="${esc(v.vin)}"></label>
+      <label class="f">Target tire pressure (psi)<input name="targetPsi" type="number" min="20" max="60" value="${esc(v.targetPsi)}"></label>
+      <div style="display:flex;flex-direction:column;gap:10px;justify-content:center">
+        <label class="check"><input type="checkbox" name="salted" ${v.salted?"checked":""}> Roads are salted in winter</label>
+        <label class="check"><input type="checkbox" name="hepa" ${v.hepa?"checked":""}> Has HEPA filtration</label>
+      </div>
+      <div><button class="btn primary" type="submit">Save vehicle</button></div>
+    </form></div></div>
+  <div class="section"><h2>Sync between devices</h2>
+  ${Sync.on()?`
+    <p class="lede">Your data is saved to a secret gist in your GitHub account. It syncs a moment after each change, whenever you come back to the app, and every couple of minutes while it's open.</p>
+    <div class="panel pad">
+      <p style="margin-top:0;display:flex;gap:8px;align-items:baseline"><span class="dot ${Sync.status}"></span><span id="syncStatus">${esc(syncText())}</span></p>
+      <div class="toolbar" style="margin:0"><button class="btn primary" data-act="sync-now">Sync now</button>${Sync.cfg.gistId?`<a class="btn" href="https://gist.github.com/${esc(Sync.cfg.gistId)}" target="_blank" rel="noopener">View on GitHub</a>`:""}<span class="grow"></span><button class="btn danger" data-act="sync-off">Turn off on this device</button></div>
+    </div>`:`
+    <p class="lede">Sync stores your data in a secret gist in your own GitHub account, so no other service is needed. Set it up once on each device with the same token and they'll find the same data.</p>
+    <div class="panel pad">
+      <ol class="steps">
+        <li><a href="https://github.com/settings/tokens/new?scopes=gist&description=Model%20Y%20maintenance%20tracker" target="_blank" rel="noopener">Create a GitHub token</a>. Leave only the <b>gist</b> box checked and pick an expiration you're comfortable with.</li>
+        <li>Copy the token (it starts with <code>ghp_</code>) and paste it below. Save it somewhere safe, like a password manager, for your other devices.</li>
+        <li>On your other devices, open the app and paste the same token.</li>
+      </ol>
+      <form id="syncForm" class="toolbar" style="margin:0"><input class="search grow" name="token" type="password" placeholder="Paste your GitHub token" autocomplete="off" required style="max-width:420px"><button class="btn primary" type="submit">Turn on sync</button></form>
+      ${Sync.status==="error"&&Sync.msg?`<p class="low" style="margin-bottom:0">${esc(Sync.msg)}</p>`:""}
+    </div>`}
+  </div>
+  <div class="section"><h2>Backup</h2>
+    <p class="lede">Your data lives in this browser. Export a backup file now and then, and import it to move to another device or browser.</p>
+    <div class="toolbar"><button class="btn" data-act="export">Export backup</button><button class="btn" data-act="import">Import backup</button><span class="grow"></span><button class="btn danger" data-act="reset">Erase all data</button></div>
+  </div>`;
+};
+
+R.guide = ()=>`
+  <div class="note warn"><b>Leave these to Tesla or a professional shop.</b> Battery coolant and brake fluid levels should only be checked by a pro. Don't open the battery coolant reservoir (damage isn't covered by warranty), and don't top up brake fluid yourself. The high-voltage system (orange cables) has no user-serviceable parts.</div>
+  <div class="note">Battery coolant usually never needs replacing for the life of the car.</div>
+  <div class="note">Regenerative braking means the brake pads get little use. Press the brake pedal firmly from time to time to keep pads and rotors dry and free of rust.</div>
+  <div class="note">In hot weather the A/C may run even when it's off — it also cools the battery. Whining or water-circulating sounds while parked are normal.</div>
+  <div class="note">Always unplug the charge cable before working under the car, and keep hands clear of cooling fans, which can run while the car is off.</div>
+  <div class="section" style="margin-top:24px"><h2>Official sources</h2><div class="panel pad"><ul class="ref" style="margin:0;padding-left:20px">
+    <li><a href="https://www.tesla.com/ownersmanual/modely/en_us/" target="_blank" rel="noopener">Model Y Owner's Manual</a></li>
+    <li><a href="https://www.tesla.com/support/do-it-yourself-guides" target="_blank" rel="noopener">Tesla do-it-yourself guides</a></li>
+    <li><a href="https://service.tesla.com/" target="_blank" rel="noopener">Tesla service manuals</a></li>
+    <li><a href="https://www.tesla.com/support/service-visits" target="_blank" rel="noopener">Scheduling service</a></li>
+  </ul><p style="margin-bottom:0;color:var(--muted)">Intervals vary by model year and region. Your car's own list is under Controls › Service › Maintenance.</p></div></div>`;
+
+/* ---------- Routing ---------- */
+function currentPage(){ const h=location.hash.slice(1); return PAGES.some(p=>p[0]===h)?h:"overview"; }
+function render(){
+  const page=currentPage();
+  // keep option-driven items in sync with vehicle settings
+  const cal=S.items.find(i=>i.id==="calipers"); if(cal && cal._auto!==S.vehicle.salted){ cal.enabled=S.vehicle.salted; cal._auto=S.vehicle.salted; }
+  const hepa=S.items.find(i=>i.id==="hepa_filter"); if(hepa && hepa._auto!==S.vehicle.hepa){ hepa.enabled=S.vehicle.hepa; hepa._auto=S.vehicle.hepa; }
+  $("#pageTitle").textContent = PAGES.find(p=>p[0]===page)[1];
+  document.title = PAGES.find(p=>p[0]===page)[1]+" · "+(S.vehicle.name||"Model Y");
+  $("#content").innerHTML = R[page]();
+  renderNav(page); renderOdo();
+  $("#app").classList.remove("nav-open");
+  const ls=$("#logSearch"); if(ls){ ls.addEventListener("input",e=>{ logQuery=e.target.value; const pos=e.target.selectionStart; render(); const n=$("#logSearch"); n.focus(); n.setSelectionRange(pos,pos); }); }
+  const sf=$("#syncForm"); if(sf){ sf.addEventListener("submit",e=>{ e.preventDefault(); const t=new FormData(sf).get("token").trim(); if(!t) return; Sync.connect(t); }); }
+  const vf=$("#vehForm"); if(vf){ vf.addEventListener("submit",e=>{ e.preventDefault(); const f=new FormData(vf);
+    Object.assign(S.vehicle,{name:f.get("name").trim()||"Model Y",year:f.get("year"),trim:f.get("trim"),vin:f.get("vin"),targetPsi:Number(f.get("targetPsi"))||42,salted:f.has("salted"),hepa:f.has("hepa"),mod:Date.now()});
+    save(); render(); toast("Vehicle saved"); }); }
+}
+window.addEventListener("hashchange",()=>{ render(); window.scrollTo(0,0); });
+
+/* ---------- Dialog helper ---------- */
+function openDialog(title, body, submitLabel, onSubmit){
+  const dlg=$("#dlg"), form=$("#dlgForm");
+  form.innerHTML=`<h3>${title}</h3><div class="stack">${body}</div><div class="actions"><button class="btn" value="cancel" formnovalidate>Cancel</button><button class="btn primary" value="ok">${submitLabel}</button></div>`;
+  form.onsubmit=e=>{
+    if(e.submitter && e.submitter.value==="cancel") return;
+    e.preventDefault();
+    const data=Object.fromEntries(new FormData(form));
+    if(onSubmit(data)!==false){ dlg.close(); save(); render(); }
+  };
+  dlg.showModal();
+  const first=form.querySelector("input,select,textarea"); if(first) first.focus();
+}
+const fld=(label,name,val="",type="text",extra="")=>`<label class="f">${label}<input name="${name}" type="${type}" value="${esc(val)}" ${extra}></label>`;
+
+function bumpOdo(miles,date){ const m=Number(miles); if(m && m>(Number(S.vehicle.odometer)||0)){ S.vehicle.odometer=m; S.vehicle.odoDate=date||today(); S.vehicle.mod=Date.now(); } }
+
+function logService(itemId){
+  const it=S.items.find(i=>i.id===itemId);
+  openDialog(`Log: ${esc(it.name)}`,
+    fld("Date done","date",today(),"date","required max='"+today()+"'")+
+    fld("Mileage","miles",S.vehicle.odometer||"","number","min='0' inputmode='numeric'")+
+    `<div class="grid2">${fld("Cost ($)","cost","","number","min='0' step='0.01'")}${fld("Shop","shop","","text","placeholder='Tesla Service, DIY…'")}</div>`+
+    `<label class="f">Notes<textarea name="notes" rows="2"></textarea></label>`,
+    "Save", d=>{
+      const it=S.items.find(i=>i.id===itemId); if(!it) return;
+      it.mod=Date.now();
+      it.last={date:d.date, miles:d.miles===""?null:Number(d.miles)};
+      S.log.push({id:uid(),date:d.date,miles:d.miles===""?null:Number(d.miles),title:it.name,itemId:it.id,cost:Number(d.cost)||0,shop:d.shop,notes:d.notes});
+      bumpOdo(d.miles,d.date);
+      toast(`${it.name} logged`);
+    });
+}
+function editItem(id){
+  const it=id?S.items.find(i=>i.id===id):null;
+  openDialog(it?"Edit item":"Add custom item",
+    fld("Name","name",it?it.name:"","text","required")+
+    `<div class="grid2">${fld("Every (months)","months",it?.months??"","number","min='0'")}${fld("Every (miles)","miles",it?.miles??"","number","min='0'")}</div>`+
+    `<label class="f">Description<textarea name="desc" rows="2">${esc(it?.desc||"")}</textarea></label>`+
+    `<div class="grid2">${fld("Last done","ldate",it?.last?.date||"","date","max='"+today()+"'")}${fld("Mileage then","lmiles",it?.last?.miles??"","number","min='0'")}</div>`+
+    (it?`<label class="check"><input type="checkbox" name="enabled" ${it.enabled?"checked":""}> Track this item</label>`:"")+
+    (it&&it.custom?`<button type="button" class="btn danger" id="delItem" style="align-self:flex-start">Delete item</button>`:""),
+    "Save", d=>{
+      if(!d.months && !d.miles){ toast("Set a months or miles interval"); return false; }
+      const it=id?S.items.find(i=>i.id===id):null;
+      if(id && !it) return;
+      const target=it||{id:"c_"+uid(),custom:true,enabled:true};
+      target.mod=Date.now();
+      target.name=d.name.trim(); target.desc=d.desc; target.months=d.months?Number(d.months):null; target.miles=d.miles?Number(d.miles):null;
+      if(it) target.enabled=d.enabled==="on";
+      target.last=d.ldate?{date:d.ldate,miles:d.lmiles===""?null:Number(d.lmiles)}:null;
+      if(!it) S.items.push(target);
+      toast("Item saved");
+    });
+  const del=$("#delItem"); if(del) del.onclick=()=>{ if(confirm("Delete this item? Its service log entries stay.")){ S.items=S.items.filter(i=>i.id!==id); S.deleted.push(id); $("#dlg").close(); save(); render(); } };
+}
+function tireDialog(kind){
+  const unit=kind==="psi"?"psi":"/32 in";
+  const f=(l,n)=>fld(`${l} (${unit})`,n,"","number","min='0' step='"+(kind==="psi"?"0.5":"1")+"' required inputmode='decimal'");
+  openDialog(kind==="psi"?"Log tire pressure":"Log tread depth",
+    fld("Date","date",today(),"date","required max='"+today()+"'")+`<div class="grid2">${f("Front left","fl")}${f("Front right","fr")}${f("Rear left","rl")}${f("Rear right","rr")}</div>`,
+    "Save", d=>{
+      const rec={id:uid(),date:d.date,fl:Number(d.fl),fr:Number(d.fr),rl:Number(d.rl),rr:Number(d.rr)};
+      const arr=kind==="psi"?S.pressures:S.tread; arr.push(rec); arr.sort((a,b)=>b.date.localeCompare(a.date));
+      toast(kind==="psi"?"Pressure logged":"Tread depth logged");
+    });
+}
+function addLog(){
+  openDialog("Add service entry",
+    fld("Service","title","","text","required placeholder='Brake pads, 12V battery…'")+
+    `<div class="grid2">${fld("Date","date",today(),"date","required")}${fld("Mileage","miles",S.vehicle.odometer||"","number","min='0'")}</div>`+
+    `<div class="grid2">${fld("Cost ($)","cost","","number","min='0' step='0.01'")}${fld("Shop","shop")}</div>`+
+    `<label class="f">Notes<textarea name="notes" rows="2"></textarea></label>`,
+    "Add entry", d=>{
+      S.log.push({id:uid(),date:d.date,miles:d.miles===""?null:Number(d.miles),title:d.title.trim(),itemId:null,cost:Number(d.cost)||0,shop:d.shop,notes:d.notes});
+      bumpOdo(d.miles,d.date); toast("Entry added");
+    });
+}
+function setOdo(){
+  openDialog("Update odometer", fld("Current mileage","odo",S.vehicle.odometer||"","number","min='0' required inputmode='numeric'")+`<p style="margin:0;color:var(--muted);font-size:.9rem">Find it on the touchscreen under Controls › Software or in the Tesla app.</p>`,
+    "Update", d=>{ S.vehicle.odometer=Number(d.odo)||0; S.vehicle.odoDate=today(); S.vehicle.mod=Date.now(); toast("Odometer updated"); });
+}
+
+/* ---------- Events ---------- */
+document.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]"); if(!el) return;
+  const a=el.dataset.act, id=el.dataset.id;
+  if(a==="check") return; // handled on change
+  if(el.tagName==="A") e.preventDefault();
+  switch(a){
+    case "done": logService(id); break;
+    case "edit-item": editItem(id); break;
+    case "new-item": editItem(null); break;
+    case "enable": { const x=S.items.find(i=>i.id===id); x.enabled=true; x.mod=Date.now(); } save(); render(); break;
+    case "add-psi": tireDialog("psi"); break;
+    case "add-tread": tireDialog("tread"); break;
+    case "del-psi": if(confirm("Delete this reading?")){ S.pressures=S.pressures.filter(p=>p.id!==id); S.deleted.push(id); save(); render(); } break;
+    case "del-tread": if(confirm("Delete this reading?")){ S.tread=S.tread.filter(p=>p.id!==id); S.deleted.push(id); save(); render(); } break;
+    case "add-log": addLog(); break;
+    case "del-log": if(confirm("Delete this entry?")){ S.log=S.log.filter(x=>x.id!==id); S.deleted.push(id); save(); render(); } break;
+    case "odo": setOdo(); break;
+    case "export": {
+      const blob=new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+      const url=URL.createObjectURL(blob), link=document.createElement("a");
+      link.href=url; link.download=`modely-maintenance-${today()}.json`; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000); toast("Backup exported"); break; }
+    case "import": $("#importFile").click(); break;
+    case "reset": {
+      const msg = Sync.on() ? "Erase all maintenance data from this device? Sync will also be turned off here, so your synced copy on GitHub and your other devices stay untouched." : "Erase all maintenance data from this browser? Export a backup first if you want to keep it.";
+      if(confirm(msg)){ if(Sync.on()) Sync.disconnect(); S=freshState(); saveLocal(); render(); toast("All data erased"); } break; }
+    case "sync-now": Sync.run(); break;
+    case "sync-off": if(confirm("Turn off sync on this device? Your data stays here and in your GitHub gist.")){ Sync.disconnect(); render(); toast("Sync turned off on this device"); } break;
+  }
+});
+document.addEventListener("change",e=>{
+  const el=e.target; if(el.dataset.act!=="check") return;
+  S.checks[el.dataset.id]= el.checked ? periodKey(el.dataset.p) : null; S.checksMod=Date.now();
+  save(); render();
+});
+$("#importFile").addEventListener("change",e=>{
+  const file=e.target.files[0]; if(!file) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{ const d=JSON.parse(r.result); if(!d.items||!d.vehicle) throw 0; S=Object.assign(freshState(),d); if(!Array.isArray(S.deleted)) S.deleted=[]; save(); render(); toast("Backup imported"); }catch(_){ toast("That file isn't a valid backup"); } e.target.value=""; };
+  r.readAsText(file);
+});
+$("#odoBtn").addEventListener("click",setOdo);
+$("#menuBtn").addEventListener("click",()=>$("#app").classList.add("nav-open"));
+$("#scrim").addEventListener("click",()=>$("#app").classList.remove("nav-open"));
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") $("#app").classList.remove("nav-open"); });
+
+/* ---------- Sync (GitHub Gist) ---------- */
+function mergeStates(a,b){
+  const del=[...new Set([...(a.deleted||[]),...(b.deleted||[])])], ds=new Set(del);
+  const union=(x=[],y=[],pick)=>{ const m=new Map(); [...x,...y].forEach(r=>{ if(!r||ds.has(r.id)) return; const cur=m.get(r.id); m.set(r.id, cur ? (pick?pick(cur,r):cur) : r); }); return [...m.values()]; };
+  const newer=(p,q)=>((q.mod||0)>(p.mod||0)?q:p);
+  const byDate=(p,q)=>q.date.localeCompare(p.date);
+  const out=freshState();
+  out.deleted=del;
+  out.items=union(a.items,b.items,newer);
+  out.log=union(a.log,b.log);
+  out.pressures=union(a.pressures,b.pressures).sort(byDate);
+  out.tread=union(a.tread,b.tread).sort(byDate);
+  const va=a.vehicle||{}, vb=b.vehicle||{};
+  out.vehicle=Object.assign(out.vehicle, (vb.mod||0)>(va.mod||0)?vb:va);
+  const ca=a.checksMod||0, cb=b.checksMod||0;
+  out.checks=Object.assign({}, cb>ca?b.checks:a.checks); out.checksMod=Math.max(ca,cb);
+  out.updatedAt=Math.max(a.updatedAt||0,b.updatedAt||0);
+  return out;
+}
+function canon(v){
+  if(Array.isArray(v)) return "["+v.map(canon).join(",")+"]";
+  if(v && typeof v==="object") return "{"+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+":"+canon(v[k])).join(",")+"}";
+  return JSON.stringify(v===undefined?null:v);
+}
+const SYNC_KEY="modely-sync-v1", GIST_FILE="modely-maintenance.json";
+const Sync={
+  cfg:{token:"",gistId:""}, status:"off", msg:"", last:0, busy:false, again:false, timer:null,
+  loadCfg(){ try{ Object.assign(this.cfg, JSON.parse(localStorage.getItem(SYNC_KEY)||"{}")); }catch(_){} if(this.cfg.token) this.status="idle"; },
+  saveCfg(){ try{ localStorage.setItem(SYNC_KEY, JSON.stringify(this.cfg)); }catch(_){} },
+  on(){ return !!this.cfg.token; },
+  connect(token){ this.cfg={token, gistId:""}; this.saveCfg(); this.status="idle"; render(); this.run(true); },
+  disconnect(){ clearTimeout(this.timer); this.cfg={token:"",gistId:""}; this.saveCfg(); this.status="off"; this.msg=""; this.last=0; renderSyncStatus(); },
+  async api(path, opts={}){
+    const headers={"Accept":"application/vnd.github+json","Authorization":"Bearer "+this.cfg.token};
+    if(opts.body) headers["Content-Type"]="application/json";
+    const r=await fetch("https://api.github.com"+path,{...opts,headers,cache:"no-store"});
+    if(!r.ok){
+      const e=new Error(r.status===401?"GitHub didn't accept the token. Check that it's correct and hasn't expired.":r.status===403||r.status===404&&path==="/gists"?"The token needs the gist permission.":"GitHub returned an error ("+r.status+"). Try again in a moment.");
+      e.status=r.status; throw e;
+    }
+    return r.json();
+  },
+  async findGist(){
+    for(let page=1; page<=10; page++){
+      const list=await this.api(`/gists?per_page=100&page=${page}`);
+      const g=list.find(g=>g.files && g.files[GIST_FILE]);
+      if(g) return g.id;
+      if(list.length<100) break;
+    }
+    return "";
+  },
+  async readRemote(){
+    const g=await this.api(`/gists/${this.cfg.gistId}`);
+    const f=g.files && g.files[GIST_FILE]; if(!f) return null;
+    let txt=f.content;
+    if(f.truncated){ txt=await (await fetch(f.raw_url,{cache:"no-store"})).text(); }
+    return JSON.parse(txt);
+  },
+  async writeRemote(state){
+    await this.api(`/gists/${this.cfg.gistId}`,{method:"PATCH",body:JSON.stringify({files:{[GIST_FILE]:{content:JSON.stringify(state)}}})});
+  },
+  async run(first){
+    if(!this.on()) return;
+    if(this.busy){ this.again=true; return; }
+    clearTimeout(this.timer); this.timer=null;
+    if(!navigator.onLine){ this.set("offline","You're offline. Changes are saved here and will sync when you reconnect."); return; }
+    this.busy=true; this.again=false; this.set("syncing","");
+    try{
+      if(!this.cfg.gistId){ this.cfg.gistId=await this.findGist(); this.saveCfg(); }
+      if(!this.cfg.gistId){
+        const g=await this.api("/gists",{method:"POST",body:JSON.stringify({description:"Model Y maintenance tracker data",public:false,files:{[GIST_FILE]:{content:JSON.stringify(S)}}})});
+        this.cfg.gistId=g.id; this.saveCfg();
+        if(first) toast("Sync is on. Your data is now saved to GitHub.");
+      } else {
+        let remote;
+        try{ remote=await this.readRemote(); }
+        catch(e){ if(e.status===404){ this.cfg.gistId=""; this.saveCfg(); this.again=true; throw new Error("The sync gist was deleted. Creating a new one…"); } throw e; }
+        const merged=remote?mergeStates(S,remote):S;
+        if(!remote || canon(merged)!==canon(remote)) await this.writeRemote(merged);
+        const next=mergeStates(S,merged); // keep anything edited while we were talking to GitHub
+        if(canon(next)!==canon(S)){ S=next; saveLocal(); safeRender(); }
+        if(first) toast("Sync is on. Your data from other devices has been merged.");
+      }
+      this.last=Date.now(); this.set("ok","");
+    }catch(e){
+      if(e.status===401){ const m=e.message; this.disconnect(); this.set("error",m); render(); toast(m); }
+      else this.set("error", e.message && !/fetch/i.test(e.message) ? e.message : "Couldn't reach GitHub. Will retry.");
+    }finally{
+      this.busy=false;
+      if(this.again) this.schedule(800);
+    }
+  },
+  schedule(ms=1500){ if(!this.on()) return; clearTimeout(this.timer); this.timer=setTimeout(()=>this.run(),ms); },
+  set(st,msg){ this.status=st; this.msg=msg; renderSyncStatus(); }
+};
+function ago(t){ const s=Math.round((Date.now()-t)/1000); if(s<45) return "just now"; const m=Math.round(s/60); if(m<60) return m+" min ago"; return "at "+new Date(t).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"}); }
+function syncText(){
+  if(!Sync.on()) return Sync.status==="error"&&Sync.msg ? Sync.msg : "Sync is off. Data is saved in this browser only.";
+  if(Sync.status==="syncing") return "Syncing…";
+  if(Sync.status==="error"||Sync.status==="offline") return Sync.msg;
+  if(Sync.last) return "Synced "+ago(Sync.last);
+  return "Sync is on";
+}
+function renderSyncStatus(){
+  const f=$("#syncFoot"); if(f) f.innerHTML=`<span class="dot ${Sync.on()?Sync.status:"off"}"></span><span>${esc(syncText())}</span>`;
+  const s=$("#syncStatus"); if(s){ s.textContent=syncText(); const d=s.previousElementSibling; if(d) d.className="dot "+Sync.status; }
+}
+let pendingRender=false;
+function busyEditing(){ const ae=document.activeElement; return $("#dlg").open || (ae && $("#content").contains(ae) && /INPUT|TEXTAREA|SELECT/.test(ae.tagName) && ae.type!=="checkbox"); }
+function safeRender(){ if(busyEditing()){ pendingRender=true; return; } render(); }
+$("#dlg").addEventListener("close",()=>{ if(pendingRender){ pendingRender=false; setTimeout(render,0); } });
+document.addEventListener("focusout",()=>setTimeout(()=>{ if(pendingRender && !busyEditing()){ pendingRender=false; render(); } },0));
+
+Sync.loadCfg();
+load(); render(); renderSyncStatus();
+Sync.run();
+document.addEventListener("visibilitychange",()=>{
+  if(document.visibilityState==="visible") Sync.schedule(200);
+  else if(Sync.timer) Sync.run(); // push pending changes before the tab goes to the background
+});
+window.addEventListener("online",()=>Sync.schedule(200));
+window.addEventListener("offline",()=>{ if(Sync.on()) Sync.set("offline","You're offline. Changes are saved here and will sync when you reconnect."); });
+setInterval(()=>{ if(document.visibilityState==="visible") Sync.run(); },120000);
+setInterval(renderSyncStatus,30000);
+})();
+</script>
+</body>
+</html>
